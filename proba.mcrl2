@@ -1,0 +1,57 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%actions%%%%%%%%%%%%%%%%%%%%%%%%%%
+act
+%console% 
+	upB, downB, stopB, resumeB, undockB, resetB, releaseHBreak, releaseVBreak; 
+%sensors%
+	isDocked, realeseDock, moveUp,moveDown, moveIn, moveOut, calibrate;
+
+sort 
+	Mode = struct Normal|Emergency ;
+	MotorStatus = struct mOn|mOff;	  
+	Vsensor = struct maxHeight|minHeight| someHeight;
+	Hsensor = struct maxIn|maxOut|someLength;
+	BreakStatus = struct bOn|bOff;
+
+proc 
+Controller (m:Mode,mV:MotorStatus,mH:MotorStatus,bV:BreakStatus,bH:BreakStatus, height:Vsensor, length:Hsensor,isDocked:Bool, calibrate:Bool)
+=stopB.releaseHBreak
+	.Controller(m=Emergency,mV=mOff, mH=mOff, bH=bOff, isDocked=false)
++resumeB.Controller(m=Normal,mV=mOff, mH=mOff, bH=bOff, isDocked=false);
+%+undockB.
+	%	(isDocked) ->bH.realeseDock.Controller(m,false,horizontal,vertical,ms)
+%<> Controller(m,isDocked,horizontal,vertical,ms)
+%+upB.
+%	Controller(Normal,isDocked,false,true,mvOn) -> releaseVBreak.mvOn.Controller(m,isDocked,false,vertical,mvOn)
+%<>Controller(m,isDocked,horizontal,ms)
+%+downB.Controller(isDocked)-> realeseVBreak.mvOn.Controller(m,isDocked,false,vertical,mvOn)
+%<>Controller(m,isDocked,horizontal,ms);
+
+%+isDocked.Controller(m,true,horizontal,vertical,ms)
+%+maxIn....
+%+maxOut.mhOff.bH.
+
+
+%only the ones that should be chaged go in the brackets
+
+%= press(stop).hBrakeOff.hMotorOff.Console(m=Emergency, mH=stopped, brH=off)
+
+
+%Controller (m:Mode,isDocked,horizontal,vertical, ms:MotorStatus)
+%=sto%pB.releaseHBreak.mvOff.mhOff.
+	%Controller(Emergency,isDocked,horizontal,vertical,mvOff,mhOff)
+%+resumeB.Controller(Normal,isDocked,ms)
+%+undockB.
+	%	(isDocked) ->bH.realeseDock.Controller(m,false,horizontal,vertical,ms)
+%<> Controller(m,isDocked,horizontal,vertical,ms)
+%+upB.
+%	Controller(Normal,isDocked,false,true,mvOn) -> releaseVBreak.mvOn.Controller(m,isDocked,false,vertical,mvOn)
+%<>Controller(m,isDocked,horizontal,ms)
+%+downB.Controller(isDocked)-> realeseVBreak.mvOn.Controller(m,isDocked,false,vertical,mvOn)
+%<>Controller(m,isDocked,horizontal,ms);
+
+%+isDocked.Controller(m,true,horizontal,vertical,ms)
+%+maxIn....
+%+maxOut.mhOff.bH.
+
+init
+Controller(m=Normal,mV=mOff,mH=mOff,bV=bOn,bH=bOff, height=someHeight, length=someLength, isDocked=false, calibrate=true);
