@@ -1,0 +1,70 @@
+sort	Mode = struct NORMAL | EMERGENCY;
+		VerticalMotorStatus = struct VERTICAL_MOTOR_ON | VERTICAL_MOTOR_OFF;	  
+		HorizontalMotorStatus = struct HORIZONTAL_MOTOR_ON | HORIZONTAL_MOTOR_OFF;	 
+		VerticalBreakStatus = struct VERTICAL_BREAK_ON | VERTICAL_BREAK_OFF;
+		HorizontalBreakStatus = struct HORIZONTAL_BREAK_ON | HORIZONTAL_BREAK_OFF;
+		VerticalSensor = struct UPPERMOST |LOWERMOST | STANDARD | SOME_HEIGHT;
+		HorizontalSensor = struct INSIDE | OUTSIDE;
+		DockSensor= struct DOCKED | UNDOCKED;
+		Calibration = struct CALIBRATED | UNCALIBRATED;
+		Button = struct UP | DOWN | RESET | STOP | RESUME | UNDOCK;
+
+map   isStandardHeight : VerticalSensor -> Bool;
+		isRightmost : HorizontalSensor -> Bool;
+		isDocked : DockSensor -> Bool;
+		isCalibrated : Calibration -> Bool;
+		
+
+eqn    isStandardHeight(UPPERMOST) = false;
+		isStandardHeight(LOWERMOST) = false;
+		isStandardHeight(STANDARD) = true;
+		isRightmost(INSIDE) = false;
+		isRightmost(OUTSIDE) = true;
+		isDocked(DOCKED) = true;
+		isDocked(UNDOCKED) = false;	
+		isCalibrated(CALIBRATED) = true;
+		isCalibrated(UNCALIBRATED) = false;
+
+act  	%Console
+		press : Button;
+		%Motor movement
+		moveUp, moveDown: VerticalMotorStatus;
+		moveIn, moveOut : HorizontalMotorStatus;
+		%Break 
+		applyHBreak, releaseHBreak: HorizontalBreakStatus;
+		applyVBreak, releaseVBreak: VerticalBreakStatus;
+
+		%sensors
+		%sendDockSensorStatus, receiveDockSensorStatus, comm_DockSensorStatus : DockSensor;
+		%sendVerticalStatus, receiveVerticalStatus, comm_VerticalStatus : VerticalSensor;
+		%sendHorizontalStatus, receiveHorizontalStatus, comm_HorizontalStatus : HorizontalSensor;
+
+%verticalSensor: VerticalSensor, horizontalSensor: HorizontalSensor, dockSensor: DockSensor
+
+proc	Controller (mode: Mode, verticalMotor: VerticalMotorStatus, horizontalMotor: HorizontalMotorStatus, verticalBreak: VerticalBreakStatus, horizontalBreak: HorizontalBreakStatus, verticalPosition: VerticalSensor, horizontalPosition: HorizontalSensor, dockSensor: DockSensor, calibrated: Calibration) = 
+		   press(STOP) . Controller(mode = EMERGENCY, horizontalBreak = HORIZONTAL_BREAK_OFF)
+
+		+ press(RESUME) . Controller(mode = NORMAL, horizontalBreak = HORIZONTAL_BREAK_ON)
+
+
+		+ press(UNDOCK) . (isDocked(dockSensor) && isRightmost(horizontalPosition)) -> Controller(dockSensor = UNDOCKED)
+			 	<> Controller()
+		
+		+ press(RESET) . (isDocked(dockSensor)) -> Controller(verticalPosition = STANDARD) 
+				<> Controller(calibrated = UNCALIBRATED, verticalPosition = SOME_HEIGHT)
+
+		+ press(UP) . (!isDocked(dockSensor) || !isCalibrated(calibrated)) -> releaseVBreak(VERTICAL_BREAK_OFF) . moveUp(VERTICAL_MOTOR_ON) . Controller(verticalMotor = VERTICAL_MOTOR_OFF, verticalBreak = VERTICAL_BREAK_ON, verticalPosition = UPPERMOST)
+				<> ((isStandardHeight(verticalPosition)) -> press(UP) . releaseHBreak(HORIZONTAL_BREAK_OFF) . moveIn(HORIZONTAL_MOTOR_ON) . Controller(horizontalMotor = HORIZONTAL_MOTOR_OFF, horizontalBreak = HORIZONTAL_BREAK_ON, horizontalPosition = INSIDE)
+							<> releaseVBreak(VERTICAL_BREAK_OFF) . moveUp(VERTICAL_MOTOR_ON) . Controller(verticalMotor = VERTICAL_MOTOR_OFF, verticalBreak = VERTICAL_BREAK_ON, verticalPosition = STANDARD));
+
+		+ press(DOWN) . (isDocked(dockSensor) && isCalibrated(calibrated)) ->  (move out untill rightmost) 
+				<> (move down)
+	
+
+		
+
+
+
+% verticalSensor = LOWERMOST, horizontalSensor = OUTSIDE, docksensor = UNDOCK
+init    Controller(mode = NORMAL, verticalMotor =VERTICAL_MOTOR_OFF, horizontalMotor =HORIZONTAL_MOTOR_OFF, verticalBreak = VERTICAL_BREAK_OFF, horizontalBreak =HORIZONTAL_BREAK_OFF, verticalPosition = LOWERMOST, horizontalPosition = OUTSIDE, calibrated = UNCALIBRATED, dockSensor = UNDOCKED);
+		
