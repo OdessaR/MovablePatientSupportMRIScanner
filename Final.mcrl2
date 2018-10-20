@@ -3,7 +3,7 @@ sort	Mode = struct NORMAL | EMERGENCY;
 		HorizontalMotorStatus = struct HORIZONTAL_MOTOR_ON | HORIZONTAL_MOTOR_OFF;	 
 		VerticalBreakStatus = struct VERTICAL_BREAK_ON | VERTICAL_BREAK_OFF;
 		HorizontalBreakStatus = struct HORIZONTAL_BREAK_ON | HORIZONTAL_BREAK_OFF;
-		VerticalSensor = struct UPPERMOST |LOWERMOST | STANDARD | SOME_HEIGHT;
+		VerticalSensor = struct UPPERMOST | LOWERMOST | STANDARD | SOME_HEIGHT;
 		HorizontalSensor = struct INSIDE | OUTSIDE;
 		DockSensor= struct DOCKED | UNDOCKED;
 		Calibration = struct CALIBRATED | UNCALIBRATED;
@@ -55,13 +55,11 @@ proc	Controller (mode: Mode, verticalMotor: VerticalMotorStatus, horizontalMotor
 
 		+ press(UP) . (!isDocked(dockSensor) || !isCalibrated(calibrated)) -> releaseVBreak(VERTICAL_BREAK_OFF) . moveUp(VERTICAL_MOTOR_ON) . Controller(verticalMotor = VERTICAL_MOTOR_OFF, verticalBreak = VERTICAL_BREAK_ON, verticalPosition = UPPERMOST)
 				<> ((isStandardHeight(verticalPosition)) -> press(UP) . releaseHBreak(HORIZONTAL_BREAK_OFF) . moveIn(HORIZONTAL_MOTOR_ON) . Controller(horizontalMotor = HORIZONTAL_MOTOR_OFF, horizontalBreak = HORIZONTAL_BREAK_ON, horizontalPosition = INSIDE)
-							<> releaseVBreak(VERTICAL_BREAK_OFF) . moveUp(VERTICAL_MOTOR_ON) . Controller(verticalMotor = VERTICAL_MOTOR_OFF, verticalBreak = VERTICAL_BREAK_ON, verticalPosition = STANDARD));
+							<> releaseVBreak(VERTICAL_BREAK_OFF) . moveUp(VERTICAL_MOTOR_ON) . Controller(verticalMotor = VERTICAL_MOTOR_OFF, verticalBreak = VERTICAL_BREAK_ON, verticalPosition = STANDARD))
 
-		+ press(DOWN) . (isDocked(dockSensor) && isCalibrated(calibrated)) ->  (move out untill rightmost) 
-				<> (move down)
+		+ press(DOWN) . (isDocked(dockSensor) && isCalibrated(calibrated)) ->  releaseHBreak(HORIZONTAL_BREAK_OFF). moveOut(HORIZONTAL_MOTOR_ON) . Controller(horizontalMotor = HORIZONTAL_MOTOR_OFF, horizontalBreak = HORIZONTAL_BREAK_ON, horizontalPosition = OUTSIDE)
+				<> releaseVBreak(VERTICAL_BREAK_OFF).moveDown(VERTICAL_MOTOR_ON) . Controller(verticalMotor = VERTICAL_MOTOR_OFF, verticalBreak = VERTICAL_BREAK_ON, verticalPosition = LOWERMOST);
 	
-
-		
 
 
 
